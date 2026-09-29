@@ -1090,10 +1090,22 @@ bool DarwinAsmParser::parseSDKVersion(VersionTuple &SDKVersion) {
   return false;
 }
 
+//
+//  [INTERNAL PROJECT TRACKING ANNOTATION]
+//  Project:            clang
+//  Track:              Mernda
+//  Completion Status:  Testing
+//
+//  Description:
+//  NeoDarwin intentionally spoofs as macOS.
+//
+//  Affected projects (subject to change):
+//      clang
+//
 void DarwinAsmParser::checkVersion(StringRef Directive, StringRef Arg,
                                    SMLoc Loc, Triple::OSType ExpectedOS) {
   const Triple &Target = getContext().getObjectFileInfo()->getTargetTriple();
-  if (Target.getOS() != ExpectedOS)
+  if ((Target.getOS() != ExpectedOS) && (ExpectedOS != Triple::NeoDarwin))
     Warning(Loc, Twine(Directive) +
             (Arg.empty() ? Twine() : Twine(' ') + Arg) +
             " used while targeting " + Target.getOSName());
@@ -1159,6 +1171,20 @@ static Triple::OSType getOSTypeFromPlatform(MachO::PlatformType Type) {
   llvm_unreachable("Invalid mach-o platform type");
 }
 
+//
+//  [INTERNAL PROJECT TRACKING ANNOTATION]
+//  Project:            clang
+//  Track:              Mernda
+//  Completion Status:  Testing
+//
+//  Description:
+//  NeoDarwin does not have it's own build_version variant.
+//  This is usually inserted by the linker anyways- which we translate to macOS.
+//
+//  Affected projects (subject to change):
+//      clang
+//
+
 /// parseBuildVersion
 ///   ::= .build_version (macos|ios|tvos|watchos), parseVersion parseSDKVersion
 bool DarwinAsmParser::parseBuildVersion(StringRef Directive, SMLoc Loc) {
@@ -1175,6 +1201,7 @@ bool DarwinAsmParser::parseBuildVersion(StringRef Directive, SMLoc Loc) {
     .Case("macCatalyst", MachO::PLATFORM_MACCATALYST)
     .Case("bridgeos", MachO::PLATFORM_BRIDGEOS)
     .Case("driverkit", MachO::PLATFORM_DRIVERKIT)
+    .Case("neodarwin",  MachO::PLATFORM_MACOS)
     .Default(0);
   if (Platform == 0)
     return Error(PlatformLoc, "unknown platform name");

@@ -1142,6 +1142,28 @@ void MCStreamer::EmitVersionForTarget(const Triple &Target,
       EmitBuildVersion(MachO::PLATFORM_DRIVERKIT, Major, Minor, Update,
                        SDKVersion);
       return;
+  } else if (Target.isNeoDarwin()) {
+    //
+    //  [INTERNAL PROJECT TRACKING ANNOTATION]
+    //  Project:            clang
+    //  Track:              Mernda
+    //  Completion Status:  Testing
+    //
+    //  Description:
+    //  As NeoDarwin projects need to run on macOS platforms too, we can't afford an incompatibility simply
+    //  because we have a different PLATFORM_XYZ value.
+    //
+    //  Spoof to macOS here to provide a semi-accurate macOS target information.
+    //
+    //  Affected projects (subject to change):
+    //      clang
+    //
+    Target.getMacOSXVersion(Major, Minor, Update);
+    VersionTuple emulatedSDKVersion(Major, Minor, Update);
+    assert(Major && "A non-zero major version is expected");
+    EmitBuildVersion(MachO::PLATFORM_MACOS, Major, Minor, Update,
+                      emulatedSDKVersion);
+    return;
   }
 
   MCVersionMinType VersionType;
