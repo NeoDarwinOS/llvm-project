@@ -473,6 +473,7 @@ void LTOModule::addDefinedSymbol(StringRef Name, const GlobalValue *def,
 void LTOModule::addAsmGlobalSymbol(StringRef name,
                                    lto_symbol_attributes scope) {
   auto IterBool = _defines.insert(name);
+  _asm_symbols.push_back(IterBool.first->first())
 
   // only add new define if not already defined
   if (!IterBool.second)
@@ -516,6 +517,7 @@ void LTOModule::addAsmGlobalSymbolUndef(StringRef name) {
   auto IterBool = _undefines.insert(std::make_pair(name, NameAndAttributes()));
 
   _asm_undefines.push_back(IterBool.first->first());
+  _asm_symbols.push_back(IterBool.first->first());
 
   // we already have the symbol
   if (!IterBool.second)

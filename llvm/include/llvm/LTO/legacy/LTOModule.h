@@ -55,6 +55,7 @@ private:
   ModuleSymbolTable SymTab;
   std::unique_ptr<TargetMachine> _target;
   std::vector<NameAndAttributes> _symbols;
+  std::vector<StringRef> _asm_symbols;
 
   // _defines and _undefines only needed to disambiguate tentative definitions
   StringSet<>                             _defines;
@@ -134,6 +135,14 @@ public:
     return _symbols.size();
   }
 
+  /// Get the number of ASM symbols
+  ///
+  /// [samuelfzormeister]: For ld64.
+  ///
+  uint32_t getAsmSymbolCount() {
+    return _asm_symbols.size();
+  }
+
   /// Get the attributes for a symbol at the specified index.
   lto_symbol_attributes getSymbolAttributes(uint32_t index) {
     if (index < _symbols.size())
@@ -148,9 +157,19 @@ public:
     return StringRef();
   }
 
+  /// Get the name of the ASM symbol at the specified index.
+  ///
+  /// [samuelfzormeister]: For ld64.
+  ///
+  StringRef getAsmSymbolName(uint32_t index) {
+    if (index < _asm_symbols.size())
+      return _asm_symbols[index];
+    return StringRef();
+  }
+
   const GlobalValue *getSymbolGV(uint32_t index) {
-    if (index < _symbols.size())
-      return _symbols[index].symbol;
+    if (index < _asm_symbols.size())
+      return _asm_symbols[index].symbol;
     return nullptr;
   }
 
