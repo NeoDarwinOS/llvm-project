@@ -764,6 +764,7 @@ def Availability : InheritableAttr {
              .Case("watchos_app_extension", "watchOS (App Extension)")
              .Case("bridgeos", "bridgeOS")
              .Case("driverkit", "DriverKit")
+             .Case("neodarwin", "NeoDarwin")
              .Case("swift", "Swift")
              .Default(llvm::StringRef());
 }
@@ -779,6 +780,7 @@ static llvm::StringRef getPlatformNameSourceSpelling(llvm::StringRef Platform) {
              .Case("watchos_app_extension", "watchOSApplicationExtension")
              .Case("bridgeos", "bridgeOS")
              .Case("driverkit", "DriverKit")
+             .Case("neodarwin", "NeoDarwin")
              .Default(Platform);
 }
 static llvm::StringRef canonicalizePlatformName(llvm::StringRef Platform) {
@@ -793,6 +795,7 @@ static llvm::StringRef canonicalizePlatformName(llvm::StringRef Platform) {
              .Case("watchOSApplicationExtension", "watchos_app_extension")
              .Case("bridgeOS", "bridgeos")
              .Case("DriverKit", "driverkit")
+             .Case("NeoDarwin", "neodarwin")
              .Default(Platform);
 } }];
   let HasCustomParsing = 1;

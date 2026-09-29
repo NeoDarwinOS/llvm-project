@@ -8332,6 +8332,7 @@ shouldDiagnoseAvailabilityByDefault(const ASTContext &Context,
     ForceAvailabilityFromVersion = VersionTuple(/*Major=*/2, /*Minor=*/0);
     break;
   case llvm::Triple::DriverKit:
+  case llvm::Triple::NeoDarwin:
     ForceAvailabilityFromVersion = VersionTuple(/*Major=*/19, /*Minor=*/0);
     break;
   default:

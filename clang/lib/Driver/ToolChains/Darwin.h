@@ -282,7 +282,8 @@ public:
     WatchOS,
     BridgeOS,
     DriverKit,
-    LastDarwinPlatform = DriverKit
+    NeoDarwin,
+    LastDarwinPlatform = NeoDarwin
   };
   enum DarwinEnvironmentKind {
     NativeEnvironment,
@@ -416,6 +417,11 @@ protected:
   bool isTargetDriverKit() const {
     assert(TargetInitialized && "Target not initialized!");
     return TargetPlatform == DriverKit;
+  }
+
+  bool isTargetNeoDarwin() const {
+    assert(TargetInitialized && "Target not initialized!");
+    return TargetPlatform == NeoDarwin;
   }
 
   bool isTargetInitialized() const { return TargetInitialized; }

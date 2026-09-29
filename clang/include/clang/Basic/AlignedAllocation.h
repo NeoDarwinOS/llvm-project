@@ -35,6 +35,7 @@ inline llvm::VersionTuple alignedAllocMinVersion(llvm::Triple::OSType OS) {
     return llvm::VersionTuple(4U);
   case llvm::Triple::BridgeOS:
     return llvm::VersionTuple(3);
+  case llvm::Triple::NeoDarwin:
   case llvm::Triple::DriverKit:
     return llvm::VersionTuple(19);
   }

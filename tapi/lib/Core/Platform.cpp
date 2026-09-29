@@ -43,6 +43,7 @@ Platform mapToPlatform(const Triple &target) {
   switch (target.getOS()) {
   default:
     return Platform::unknown;
+  case Triple::NeoDarwin:
   case Triple::MacOSX:
     return Platform::macOS;
   case Triple::IOS:

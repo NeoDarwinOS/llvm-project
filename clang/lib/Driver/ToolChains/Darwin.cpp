@@ -760,7 +760,8 @@ ToolChain::CXXStdlibType Darwin::GetDefaultCXXStdlibType() const {
   // Default to use libc++ on OS X 10.9+ and iOS 7+.
   if ((isTargetMacOS() && !isMacosxVersionLT(10, 9)) ||
        (isTargetIOSBased() && !isIPhoneOSVersionLT(7, 0)) ||
-       isTargetWatchOSBased() || isTargetBridgeOS() || isTargetDriverKit())
+       isTargetWatchOSBased() || isTargetBridgeOS() || 
+       isTargetDriverKit() || isTargetNeoDarwin())
     return ToolChain::CST_Libcxx;
 
   return ToolChain::CST_Libstdcxx;
@@ -780,7 +781,7 @@ ObjCRuntime Darwin::getDefaultObjCRuntime(bool isNonFragile) const {
 /// Darwin provides a blocks runtime starting in MacOS X 10.6 and iOS 3.2.
 bool Darwin::hasBlocksRuntime() const {
   if (isTargetWatchOSBased() ||  isTargetBridgeOS() ||
-      isTargetDriverKit())
+      isTargetDriverKit() || isTargetNeoDarwin())
     return true;
   else if (isTargetIOSBased())
     return !isIPhoneOSVersionLT(3, 2);
@@ -881,6 +882,8 @@ std::string Darwin::ComputeEffectiveClangTriple(const ArgList &Args,
     Str += "bridgeos";
   else if (isTargetDriverKit())
     Str += "driverkit";
+  else if (isTargetNeoDarwin())
+    Str += "neodarwin";
   else
     Str += "macosx";
   Str += getTargetVersion().getAsString();
@@ -1073,6 +1076,8 @@ StringRef Darwin::getPlatformFamily() const {
       return "Bridge";
     case DarwinPlatformKind::DriverKit:
       return "DriverKit";
+    case DarwinPlatformKind::NeoDarwin:
+      return "NeoDarwin";
   }
   llvm_unreachable("Unsupported platform");
 }
@@ -1090,8 +1095,22 @@ StringRef Darwin::getSDKName(StringRef isysroot) {
   return "";
 }
 
+//
+//  [INTERNAL PROJECT TRACKING ANNOTATION]
+//  Project:            clang
+//  Track:              Mernda
+//  Completion Status:  Testing
+//
+//  Description:
+//  NeoDarwin is a derivative of the "Mac OS X" style of OS build.
+//  Thus, we use OS X libraries.
+//
+//  Affected projects (subject to change):
+//      clang
+//
 StringRef Darwin::getOSLibraryNameSuffix(bool IgnoreSim) const {
   switch (TargetPlatform) {
+  case DarwinPlatformKind::NeoDarwin:
   case DarwinPlatformKind::MacOS:
     return "osx";
   case DarwinPlatformKind::IPhoneOS:
@@ -1373,6 +1392,9 @@ struct DarwinPlatform {
     case DarwinPlatformKind::DriverKit:
       Opt = options::OPT_mdriverkit_version_min_EQ;
       break;
+    case DarwinPlatformKind::NeoDarwin:
+      Opt = options::OPT_mneodarwin_version_min_EQ;
+      break;
     }
     Argument = Args.MakeJoinedArg(nullptr, Opts.getOption(Opt), OSVersion);
     Args.append(Argument);
@@ -1470,6 +1492,8 @@ private:
       return DarwinPlatformKind::BridgeOS;
     case llvm::Triple::DriverKit:
       return DarwinPlatformKind::DriverKit;
+    case llvm::Triple::NeoDarwin:
+      return DarwinPlatformKind::NeoDarwin;
     default:
       llvm_unreachable("Unable to infer Darwin variant");
     }
@@ -1500,6 +1524,7 @@ getDeploymentTargetFromOSVersionArg(DerivedArgList &Args,
                       options::OPT_mwatchos_simulator_version_min_EQ);
   Arg *BridgeOSVersion = Args.getLastArg(options::OPT_mbridgeos_version_min_EQ);
   Arg *DriverKitVersion = Args.getLastArg(options::OPT_mdriverkit_version_min_EQ);
+  Arg *NeoDarwinVersion = Args.getLastArg(options::OPT_mneodarwin_version_min_EQ);
   if (OSXVersion) {
     if (iOSVersion || TvOSVersion || WatchOSVersion) {
       TheDriver.Diag(diag::err_drv_argument_not_allowed_with)
@@ -1527,8 +1552,10 @@ getDeploymentTargetFromOSVersionArg(DerivedArgList &Args,
     return DarwinPlatform::createOSVersionArg(Darwin::WatchOS, WatchOSVersion);
   } else if (BridgeOSVersion) {
     return DarwinPlatform::createOSVersionArg(Darwin::BridgeOS, BridgeOSVersion);
-  } else if (DriverKitVersion)
+  } else if (DriverKitVersion) {
     return DarwinPlatform::createOSVersionArg(Darwin::DriverKit, DriverKitVersion);
+  } else if (NeoDarwinVersion)
+    return DarwinPlatform::createOSVersionArg(Darwin::NeoDarwin, NeoDarwinVersion);
   return None;
 }
 
@@ -1544,7 +1571,8 @@ getDeploymentTargetFromEnvironmentVariables(const Driver &TheDriver,
       "TVOS_DEPLOYMENT_TARGET",
       "WATCHOS_DEPLOYMENT_TARGET",
       "BRIDGEOS_DEPLOYMENT_TARGET",
-      "DRIVERKIT_DEPLOYMENT_TARGET"
+      "DRIVERKIT_DEPLOYMENT_TARGET",
+      "NEODARWIN_DEPLOYMENT_TARGET"
   };
   static_assert(llvm::array_lengthof(EnvVars) == Darwin::LastDarwinPlatform + 1,
                 "Missing platform");
@@ -1642,6 +1670,9 @@ inferDeploymentTargetFromSDK(DerivedArgList &Args,
   else if (SDK.startswith("DriverKit"))
     return DarwinPlatform::createFromSDK(
         Darwin::DriverKit, Version);
+  else if (SDK.startswith("NeoDarwin"))
+    return DarwinPlatform::createFromSDK(
+        Darwin::NeoDarwin, Version);
   return None;
 }
 
@@ -1675,6 +1706,9 @@ std::string getOSVersion(llvm::Triple::OSType OS, const llvm::Triple &Triple,
     break;
   case llvm::Triple::DriverKit:
     Triple.getDriverKitVersion(Major, Minor, Micro);
+    break;
+  case llvm::Triple::NeoDarwin:
+    Triple.getNeoDarwinVersion(Major, Minor, Micro);
     break;
   default:
     llvm_unreachable("Unexpected OS type");
@@ -1880,6 +1914,12 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
         HadExtra || Major >= 100 || Minor >= 100 || Micro >= 100)
       getDriver().Diag(diag::err_drv_invalid_version_number)
           << OSTarget->getAsString(Args, Opts);
+  } else if (Platform == DriverKit) {
+      if (!Driver::GetReleaseVersion(OSTarget->getOSVersion(), Major, Minor,
+                                     Micro, HadExtra) ||
+          HadExtra || Major >= 100 || Minor >= 100 || Micro >= 100)
+        getDriver().Diag(diag::err_drv_invalid_version_number)
+            << OSTarget->getAsString(Args, Opts);
   } else if (Platform == DriverKit) {
       if (!Driver::GetReleaseVersion(OSTarget->getOSVersion(), Major, Minor,
                                      Micro, HadExtra) ||
@@ -2421,6 +2461,9 @@ bool Darwin::isAlignedAllocationUnavailable() const {
   case DriverKit:
     OS = llvm::Triple::DriverKit;
     break;
+  case NeoDarwin:
+    OS = llvm::Triple::NeoDarwin;
+    break;
   }
 
   return TargetVersion < alignedAllocMinVersion(OS);
@@ -2593,9 +2636,24 @@ void Darwin::addMinVersionArgs(const ArgList &Args,
   CmdArgs.push_back(Args.MakeArgString(TargetVersion.getAsString()));
 }
 
+//
+//  [INTERNAL PROJECT TRACKING ANNOTATION]
+//  Project:            clang
+//  Track:              Mernda
+//  Completion Status:  Testing
+//
+//  Description:
+//  Spoof NeoDarwin as macOS to ld64.
+//  This is to retain compatibility with macOS.
+//
+//  Affected projects (subject to change):
+//      clang
+//
+
 static const char *getPlatformName(Darwin::DarwinPlatformKind Platform,
                                    Darwin::DarwinEnvironmentKind Environment) {
   switch (Platform) {
+  case Darwin::NeoDarwin:
   case Darwin::MacOS:
     return "macos";
   case Darwin::IPhoneOS:
@@ -2626,9 +2684,25 @@ void Darwin::addPlatformVersionArgs(const llvm::opt::ArgList &Args,
     PlatformName += "-simulator";
   CmdArgs.push_back(Args.MakeArgString(PlatformName));
   VersionTuple TargetVersion = getTargetVersion().withoutBuild();
+  if (TargetPlatform == Darwin::NeoDarwin) {
+    unsigned Major, Minor, Subminor;
+    Major = TargetVersion.getMajor();
+    Minor = TargetVersion.getMinor().getValue();
+    Subminor = TargetVersion.getSubminor().getValue();
+    getTriple().getMacOSXVersion(Major, Minor, Subminor);
+    TargetVersion = VersionTuple(Major, Minor, Subminor);
+  }
   CmdArgs.push_back(Args.MakeArgString(TargetVersion.getAsString()));
   if (SDKInfo) {
     VersionTuple SDKVersion = SDKInfo->getVersion().withoutBuild();
+    if (TargetPlatform == Darwin::NeoDarwin) {
+      unsigned Major, Minor, Subminor;
+      Major = SDKVersion.getMajor();
+      Minor = SDKVersion.getMinor().getValue();
+      Subminor = SDKVersion.getSubminor().getValue();
+      getTriple().getMacOSXVersion(Major, Minor, Subminor);
+      SDKVersion = VersionTuple(Major, Minor, Subminor);
+    }
     CmdArgs.push_back(Args.MakeArgString(SDKVersion.getAsString()));
   } else {
     // Use a blank SDK version if it's not present.

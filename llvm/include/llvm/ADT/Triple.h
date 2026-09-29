@@ -367,8 +367,13 @@ public:
                           unsigned &Micro) const;
 
   /// getDriverKitVersion - Parse the version number as with getOSVersion.  This
-  /// should only be called with bridgeOS or generic triples.
+  /// should only be called with DriverKit or generic triples.
   void getDriverKitVersion(unsigned &Major, unsigned &Minor,
+                           unsigned &Micro) const;
+
+  /// getNeoDarwinVersion - Parse the version number as with getOSVersion.  This
+  /// should only be called with NeoDarwin or generic triples.
+  void getNeoDarwinVersion(unsigned &Major, unsigned &Minor,
                            unsigned &Micro) const;
 
   /// @}

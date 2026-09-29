@@ -148,6 +148,64 @@ void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
     }
 
     Builder.defineMacro("__ENVIRONMENT_DRIVERKIT_VERSION_MIN_REQUIRED__", Str);
+  } else if (Triple.isNeoDarwin()) {
+    assert(Maj < 100 && Min < 100 && Rev < 100 && "Invalid version!");
+    char Str[7];
+    if (Maj < 10) {
+      Str[0] = '0' + Maj;
+      Str[1] = '0' + (Min / 10);
+      Str[2] = '0' + (Min % 10);
+      Str[3] = '0' + (Rev / 10);
+      Str[4] = '0' + (Rev % 10);
+      Str[5] = '\0';
+    } else {
+      // Handle versions >= 10.
+      Str[0] = '0' + (Maj / 10);
+      Str[1] = '0' + (Maj % 10);
+      Str[2] = '0' + (Min / 10);
+      Str[3] = '0' + (Min % 10);
+      Str[4] = '0' + (Rev / 10);
+      Str[5] = '0' + (Rev % 10);
+      Str[6] = '\0';
+    }
+
+    Builder.defineMacro("__ENVIRONMENT_NEODARWIN_VERSION_MIN_REQUIRED__", Str);
+
+    //
+    //  [INTERNAL PROJECT TRACKING ANNOTATION]
+    //  Project:            clang
+    //  Track:              Mernda
+    //  Completion Status:  Testing
+    //
+    //  Description:
+    //  As we orient ourselves away from using the macOS triple, it's worthwhile to keep support in place
+    //  for non-NeoDarwin projects that rely on the macOS value.
+    //
+    //  The reason we support NeoDarwin style triples is because we genuinely have APIs that are NeoDarwin exclusive.
+    //  This, however, breaks 
+    //
+    //  Affected projects (subject to change):
+    //      clang
+    //
+    Triple.getMacOSXVersion(Maj, Min, Rev);
+    assert(Maj < 100 && Min < 100 && Rev < 100 && "Invalid version!");
+    if (Maj < 10 || (Maj == 10 && Min < 10)) {
+      Str[0] = '0' + (Maj / 10);
+      Str[1] = '0' + (Maj % 10);
+      Str[2] = '0' + std::min(Min, 9U);
+      Str[3] = '0' + std::min(Rev, 9U);
+      Str[4] = '\0';
+    } else {
+      // Handle versions > 10.9.
+      Str[0] = '0' + (Maj / 10);
+      Str[1] = '0' + (Maj % 10);
+      Str[2] = '0' + (Min / 10);
+      Str[3] = '0' + (Min % 10);
+      Str[4] = '0' + (Rev / 10);
+      Str[5] = '0' + (Rev % 10);
+      Str[6] = '\0';
+    }
+    Builder.defineMacro("__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__", Str);
   }
 
   // Tell users about the kernel if there is one.

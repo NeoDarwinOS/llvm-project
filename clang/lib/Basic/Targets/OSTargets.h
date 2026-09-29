@@ -156,6 +156,7 @@ public:
     case llvm::Triple::BridgeOS:
       MinVersion = llvm::VersionTuple(3U);
       break;
+    case llvm::Triple::NeoDarwin:
     case llvm::Triple::DriverKit:
       MinVersion = llvm::VersionTuple(18U);
       break;

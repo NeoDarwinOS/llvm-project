@@ -1261,7 +1261,6 @@ void Triple::getNeoDarwinVersion(unsigned &Major, unsigned &Minor,
                               unsigned &Micro) const {
   switch (getOS()) {
     default: llvm_unreachable("unexpected OS for Darwin triple");
-    case NeoDarwin:
     case Darwin:
       if (Major < 19) {
         llvm_unreachable("unexpected Darwin version for DriverKit");
