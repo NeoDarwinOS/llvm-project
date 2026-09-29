@@ -213,6 +213,7 @@ StringRef Triple::getOSTypeName(OSType Kind) {
   case Emscripten: return "emscripten";
   case BridgeOS: return "bridgeos";
   case DriverKit: return "driverkit";
+  case NeoDarwin: return "neodarwin";
   }
 
   llvm_unreachable("Invalid OSType");
@@ -521,6 +522,7 @@ static Triple::OSType parseOS(StringRef OSName) {
     .StartsWith("emscripten", Triple::Emscripten)
     .StartsWith("bridgeos", Triple::BridgeOS)
     .StartsWith("driverkit", Triple::DriverKit)
+    .StartsWith("neodarwin", Triple::NeoDarwin)
     .Default(Triple::UnknownOS);
 }
 
@@ -1080,6 +1082,7 @@ bool Triple::getMacOSXVersion(unsigned &Major, unsigned &Minor,
 
   switch (getOS()) {
   default: llvm_unreachable("unexpected OS for Darwin triple");
+  case NeoDarwin:
   case Darwin:
     // Default to darwin8, i.e., MacOSX 10.4.
     if (Major == 0)
@@ -1137,6 +1140,7 @@ void Triple::getiOSVersion(unsigned &Major, unsigned &Minor,
                            unsigned &Micro) const {
   switch (getOS()) {
   default: llvm_unreachable("unexpected OS for Darwin triple");
+  case NeoDarwin:
   case Darwin:
   case MacOSX:
     // Ignore the version from the triple.  This is only handled because the
@@ -1163,6 +1167,7 @@ void Triple::getWatchOSVersion(unsigned &Major, unsigned &Minor,
                                unsigned &Micro) const {
   switch (getOS()) {
   default: llvm_unreachable("unexpected OS for Darwin triple");
+  case NeoDarwin:
   case Darwin:
   case MacOSX:
     // Ignore the version from the triple.  This is only handled because the
@@ -1187,6 +1192,7 @@ void Triple::getBridgeOSVersion(unsigned &Major, unsigned &Minor,
                                unsigned &Micro) const {
   switch (getOS()) {
     default: llvm_unreachable("unexpected OS for Darwin triple");
+    case NeoDarwin:
     case Darwin:
     case MacOSX:
       // Ignore the version from the triple.  This is only handled because the
@@ -1213,6 +1219,7 @@ void Triple::getDriverKitVersion(unsigned &Major, unsigned &Minor,
                                unsigned &Micro) const {
   switch (getOS()) {
     default: llvm_unreachable("unexpected OS for Darwin triple");
+    case NeoDarwin:
     case Darwin:
       if (Major < 19) {
         llvm_unreachable("unexpected Darwin version for DriverKit");
@@ -1244,6 +1251,47 @@ void Triple::getDriverKitVersion(unsigned &Major, unsigned &Minor,
     case IOS:
       // [samuelfzormeister]: iOS does support DriverKit.
       break;
+    case WatchOS:
+    case BridgeOS:
+      llvm_unreachable("conflicting triple info");
+  }
+}
+
+void Triple::getNeoDarwinVersion(unsigned &Major, unsigned &Minor,
+                              unsigned &Micro) const {
+  switch (getOS()) {
+    default: llvm_unreachable("unexpected OS for Darwin triple");
+    case NeoDarwin:
+    case Darwin:
+      if (Major < 19) {
+        llvm_unreachable("unexpected Darwin version for DriverKit");
+      }
+      break;
+    case MacOSX:
+      if (Major == 0) {
+        Major = 10;
+        Minor = 15;
+        Micro = 0;
+      }
+      if (Major == 10) {
+        Major = Minor + 4;
+        Minor = Micro;
+      } else if (Major >= 27) {
+        Major = (Major + 0);
+      } else if (Major == 26) {
+        Major = Major - 1;
+      } else {
+        Major = Major + 9;
+      }
+      Micro = 0;
+      break;
+    case DriverKit:
+    case NeoDarwin:
+      getOSVersion(Major, Minor, Micro);
+      if (Major == 0)
+        Major = 19;
+      break;
+    case IOS:
     case WatchOS:
     case BridgeOS:
       llvm_unreachable("conflicting triple info");
@@ -1702,6 +1750,7 @@ StringRef Triple::getARMCPUForArch(StringRef MArch) const {
   case llvm::Triple::TvOS:
   case llvm::Triple::BridgeOS:
   case llvm::Triple::DriverKit:
+  case llvm::Triple::NeoDarwin:
     if (MArch == "v7k")
       return "cortex-a7";
     break;

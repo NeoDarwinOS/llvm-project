@@ -191,7 +191,8 @@ public:
     Emscripten,
     BridgeOS,   // Apple bridgeOS
     DriverKit,  // Apple DriverKit
-    LastOSType = DriverKit
+    NeoDarwin,  // The NeoDarwin project.
+    LastOSType = NeoDarwin
   };
   enum EnvironmentType {
     UnknownEnvironment,
@@ -495,13 +496,18 @@ public:
     return getOS() == Triple::DriverKit;
   }
 
+  /// Is this a NeoDarwin triple
+  bool isNeoDarwin() const {
+    return getOS() == Triple::NeoDarwin;
+  }
+
   bool isWatchABI() const {
     return getSubArch() == Triple::ARMSubArch_v7k;
   }
 
   /// isOSDarwin - Is this a "Darwin" OS (OS X, iOS, or watchOS).
   bool isOSDarwin() const {
-    return isMacOSX() || isiOS() || isWatchOS() || isBridgeOS() || isDriverKit();
+    return isMacOSX() || isiOS() || isWatchOS() || isBridgeOS() || isDriverKit() || isNeoDarwin();
   }
 
   bool isSimulatorEnvironment() const {
