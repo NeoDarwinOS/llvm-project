@@ -333,6 +333,26 @@ void lto_codegen_set_diagnostic_handler(lto_code_gen_t cg,
   unwrap(cg)->setDiagnosticHandler(diag_handler, ctxt);
 }
 
+//
+//  [INTERNAL PROJECT TRACKING ANNOTATION]
+//  Project:            clang
+//  Track:              Mernda
+//  Completion Status:  Work in Progress
+//
+//  Description:
+//  libLTO for macOS has symbols that upstream doesn't have.
+//
+//  Affected projects (subject to change):
+//      clang
+//
+unsigned int lto_module_get_num_asm_symbols(lto_module_t mod) {
+  return unwrap(mod)->getAsmSymbolCount();
+}
+
+const char* lto_module_get_asm_symbol_name(lto_module_t mod, unsigned int index) {
+  return unwrap(mod)->getAsmSymbolName(index).data();
+}
+
 static lto_code_gen_t createCodeGen(bool InLocalContext) {
   lto_initialize();
 

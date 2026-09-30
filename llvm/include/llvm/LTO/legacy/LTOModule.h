@@ -168,8 +168,8 @@ public:
   }
 
   const GlobalValue *getSymbolGV(uint32_t index) {
-    if (index < _asm_symbols.size())
-      return _asm_symbols[index].symbol;
+    if (index < _symbols.size())
+      return _symbols[index].symbol;
     return nullptr;
   }
 
