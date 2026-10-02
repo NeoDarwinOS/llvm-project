@@ -29,6 +29,7 @@ class Function;
 class BasicBlock;
 class GlobalValue;
 class raw_ostream;
+class TargetMachine;
 
 //===----------------------------------------------------------------------===//
 //
@@ -273,6 +274,11 @@ ModulePass *createSampleProfileLoaderPass(StringRef Name);
 /// Write ThinLTO-ready bitcode to Str.
 ModulePass *createWriteThinLTOBitcodePass(raw_ostream &Str,
                                           raw_ostream *ThinLinkOS = nullptr);
+
+//===----------------------------------------------------------------------===//
+// Obfuscate all the string inside the module
+//
+ModulePass *createObfuscateModulePass(const TargetMachine* TM);
 
 } // End llvm namespace
 

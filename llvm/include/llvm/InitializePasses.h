@@ -390,6 +390,7 @@ void initializeStripDebugDeclarePass(PassRegistry&);
 void initializeStripGCRelocatesPass(PassRegistry&);
 void initializeStripNonDebugSymbolsPass(PassRegistry&);
 void initializeStripNonLineTableDebugInfoPass(PassRegistry&);
+void initializeObfuscateModulePass(PassRegistry&);
 void initializeStripSymbolsPass(PassRegistry&);
 void initializeStructurizeCFGPass(PassRegistry&);
 void initializeTailCallElimPass(PassRegistry&);

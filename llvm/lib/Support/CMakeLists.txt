@@ -115,6 +115,7 @@ add_llvm_library(LLVMSupport
   MemoryBuffer.cpp
   MD5.cpp
   NativeFormatting.cpp
+  Obfuscation.cpp
   Optional.cpp
   Options.cpp
   Parallel.cpp
