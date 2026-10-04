@@ -14,14 +14,15 @@
 #ifdef __APPLE__
 
 #include <TargetConditionals.h>
+
+#if !TARGET_OS_DRIVERKIT
+
 #include <dispatch/dispatch.h>
 #include <dlfcn.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#if !TARGET_OS_DRIVERKIT
 
 // These three variables hold the host's OS version.
 static int32_t GlobalMajor, GlobalMinor, GlobalSubminor;
@@ -260,6 +261,10 @@ int32_t __isPlatformVersionAtLeast(uint32_t Platform, uint32_t Major,
 
 #else
 
+#include <stdint.h>
+
+// DriverKit does not support runtime Availabillity checks, but we have to provide this symbol
+// for compaibility's sake
 int32_t __isPlatformVersionAtLeast(uint32_t Platform, uint32_t Major,
                                    uint32_t Minor, uint32_t Subminor) {
   return 0;
