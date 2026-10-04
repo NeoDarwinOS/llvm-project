@@ -15,6 +15,7 @@
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
@@ -63,11 +64,12 @@ struct ObfuscateModule : public ModulePass {
   }
 
   bool runOnModule(Module &M) override {
-    return obfuscateModule(M, getAnalysis<TargetPassConfig>().getTM<TargetMachine>(););
+    TM = &getAnalysis<TargetPassConfig>().getTM<TargetMachine>();
+    return obfuscateModule(M, TM);
   }
 
 private:
-  const TargetMachine *TM;
+  const llvm::TargetMachine *TM;
 };
 
 /// \brief Helper class to recursively gather and modify all MDStrings from
@@ -260,6 +262,8 @@ obfuscateModuleModify(Module &M, const TargetMachine *TM, Obfuscator &obfs,
   };
   addDbgIntrinsicCalls("llvm.dbg.declare");
   addDbgIntrinsicCalls("llvm.dbg.value");
+  addDbgIntrinsicCalls("llvm.dbg.addr");
+  addDbgIntrinsicCalls("llvm.dbg.label");
   Modify.run();
 
   // Every insruction's DebugLoc needs to be obfuscated
@@ -316,24 +320,24 @@ bool llvm::obfuscateModule(Module &M, const TargetMachine *TM, Obfuscator &obfs,
   static const char* const SpecialSymbols[] = {
 #define COMPILER_SYMBOL(Name) #Name,
 #include "llvm/Transforms/Utils/CompilerRTSymbols.def"
+#include "llvm/Transforms/Utils/ObjCSymbols.def"
 #undef COMPILER_SYMBOL
-      "_objc_retain",
-      "_objc_release",
-      "_objc_autorelease",
-      "_objc_retainAutoreleasedReturnValue",
-      "_objc_retainBlock",
-      "_objc_autoreleaseReturnValue",
-      "_objc_autoreleasePoolPush",
-      "_objc_loadWeakRetained",
-      "_objc_loadWeak",
-      "_objc_destroyWeak",
-      "_objc_storeWeak",
-      "_objc_initWeak",
-      "_objc_moveWeak",
-      "_objc_copyWeak",
-      "_objc_retainedObject",
-      "_objc_unretainedObject",
-      "_objc_unretainedPointer",
+      // GNU/Darwin exception handler symbols. lump all exception syms into .def?
+      "___gnat_eh_personality",
+      "___gxx_personality_v0",
+      "___gxx_personality_sj0",
+      "___gcc_personality_v0",
+      "___gcc_personality_sj0",
+      "___objc_personality_v0",
+      // MS UCRT exception handler symbols.
+      "__except_handler3",
+      "__except_handler4",
+      "___C_specific_handler",
+      "___CxxFrameHandler3",
+      "_ProcessCLRException",
+      // some people use rust too okay.
+      "_rust_eh_personality",
+      // stack protector symbols.
       "___stack_chk_fail",
       "___stack_chk_guard"
   };
@@ -380,7 +384,3 @@ char ObfuscateModule::ID = 0;
 INITIALIZE_PASS_BEGIN(ObfuscateModule, "obfuscate-module", "Obfuscate all strings in the module", false, false)
 INITIALIZE_PASS_DEPENDENCY(TargetPassConfig)
 INITIALIZE_PASS_END(ObfuscateModule, "obfuscate-module", "Obfuscate all strings in the module", false, false)
-
-ModulePass *llvm::createObfuscateModulePass(const llvm::TargetMachine *TM) {
-  return new ObfuscateModule(TM);
-}

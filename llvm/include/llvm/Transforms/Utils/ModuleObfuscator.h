@@ -26,12 +26,12 @@ class TargetMachine;
 
 /// \brief Given a Module, obfuscate the strings in the modules. Symbols that
 /// requires to be preserved for the system will be preserved as well.
-bool obfuscateModule(Module &M, const TargetMachine *TM);
+bool obfuscateModule(Module &M, const llvm::TargetMachine *TM);
 
 /// \brief Given a Module and a set of symbols must be preserved, obfuscate
 /// the strings in the modules. Symbols that requires to be preserved for the
 /// system will be preserved as well.
-bool obfuscateModule(Module &M, const TargetMachine *TM, Obfuscator &obfs,
+bool obfuscateModule(Module &M, const llvm::TargetMachine *TM, Obfuscator &obfs,
                      StringSet<> &PreserveSymbols);
 
 } // End llvm namespace
