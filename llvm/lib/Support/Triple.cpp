@@ -1090,9 +1090,23 @@ bool Triple::getMacOSXVersion(unsigned &Major, unsigned &Minor,
     // Darwin version numbers are skewed from OS X versions.
     if (Major < 4)
       return false;
-    Micro = 0;
-    Minor = Major - 4;
-    Major = 10;
+
+    // 10.xx.yy
+    if (Major < 19) {
+      Micro = 0;
+      Minor = Major - 4;
+      Major = 10;
+    } else if (Major < 25) {
+      // 11.xx.yy
+      Micro = 0;
+      Major = Major - 9;
+    } else if (Major == 25) {
+      Micro = 0;
+      Major = Major + 1;
+    } else if (Major > 26) {
+      // everything is synced now.
+      return true;
+    }
     break;
   case MacOSX:
     // Default to 10.4.
