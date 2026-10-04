@@ -22,6 +22,9 @@ set(LLVM_BUILD_EXTERNAL_COMPILER_RT ON CACHE BOOL "Build Compiler-RT with just-b
 set(COMPILER_RT_ENABLE_IOS OFF CACHE BOOL "Build iOS Compiler-RT libraries")
 set(COMPILER_RT_ENABLE_DRIVERKIT ON CACHE BOOL "Build DriverKit Compiler-RT libraries")
 
+# FIXME: we need this for any OS after they stopped shipping libstdc++
+set(LLVM_ENABLE_LIBCXX ON CACHE BOOL "")
+
 # set(LLVM_CREATE_XCODE_TOOLCHAIN ON CACHE BOOL "Generate targets to create and install an Xcode compatible toolchain")
 
 # Make unit tests (if present) part of the ALL target
